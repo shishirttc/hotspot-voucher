@@ -2,6 +2,7 @@
 session_start();
 require 'uddoktapay_config.php';
 require 'mikrotik_config.php';
+require 'CodeGenerator.php';
 
 // --- Enhanced Debug Logging ---
 $log_file = __DIR__ . '/debug_log.txt';
@@ -73,42 +74,16 @@ if ($http_code == 200 && isset($result_data['status']) && $result_data['status']
     $package_details = getPackageDetails($package_id);
     $package_name = $package_details['name'];
 
-    // Get code with file locking (same logic as before)
-    $codeFile = "codes/{$package_id}.csv";
-    $code = null;
-
-    $fp = fopen($codeFile, 'c+');
-    if ($fp) {
-        if (flock($fp, LOCK_EX)) {
-            $codes_in_file = [];
-            while (($line = fgets($fp)) !== false) {
-                $codes_in_file[] = trim($line);
-            }
-            
-            if (!empty($codes_in_file)) {
-                $code = array_shift($codes_in_file);
-                ftruncate($fp, 0);
-                rewind($fp);
-                fwrite($fp, implode(PHP_EOL, $codes_in_file));
-            } else {
-                header("Location: index.php?error=No codes available for this package.");
-                exit;
-            }
-            flock($fp, LOCK_UN);
-        } else {
-            header("Location: index.php?error=Could not process your request. Please try again.");
-            exit;
-        }
-        fclose($fp);
-    } else {
-        header("Location: index.php?error=Error accessing code file. Please try again.");
-        exit;
-    }
-
-    if ($code === null) {
-        header("Location: index.php?error=No codes available for this package.");
-        exit;
-    }
+    // Generate unique voucher code dynamically
+    $code = generateVoucherCode($package_id, $mobile);
+    
+    // Save to generated codes log
+    saveGeneratedCode([
+        'code' => $code,
+        'package_id' => $package_id,
+        'mobile' => $mobile,
+        'expires_at' => date('Y-m-d', strtotime('+7 days'))
+    ]);
 
     file_put_contents("old_codes.csv", "$mobile,$package_id,$code,".date('Y-m-d h:i:s A')."\n", FILE_APPEND);
 
