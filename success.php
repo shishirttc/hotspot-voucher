@@ -1,6 +1,7 @@
 <?php
 session_start();
 require 'uddoktapay_config.php';
+require 'mikrotik_config.php';
 
 // --- Enhanced Debug Logging ---
 $log_file = __DIR__ . '/debug_log.txt';

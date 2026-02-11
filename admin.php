@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once 'uddoktapay_config.php';
+require_once 'mikrotik_config.php';
 
 // --- PASSWORD PROTECTION ---
 $password = 'admin123'; // <-- Change this password!
