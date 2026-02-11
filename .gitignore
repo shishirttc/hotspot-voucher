@@ -1,0 +1,6 @@
+vendor/
+.env
+*.log
+.DS_Store
+debug_log.txt
+old_codes.csv
