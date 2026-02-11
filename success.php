@@ -119,7 +119,6 @@ function createMikrotikVoucher($code, $package_id, $package_details) {
     global $mikrotik_config;
     
     if (!$mikrotik_config['enabled']) {
-        logMikrotikActivity("Mikrotik disabled, skipping voucher creation");
         return [
             'success' => false,
             'message' => 'Mikrotik integration disabled'
@@ -160,19 +159,9 @@ function createMikrotikVoucher($code, $package_id, $package_details) {
             $expire_days
         );
         
-        logMikrotikActivity("Voucher creation result", [
-            'code' => $code,
-            'package' => $package_id,
-            'result' => $result
-        ]);
-        
         return $result;
         
     } catch (Exception $e) {
-        logMikrotikActivity("Voucher creation exception", [
-            'error' => $e->getMessage()
-        ]);
-        
         return [
             'success' => false,
             'message' => 'Error creating voucher: ' . $e->getMessage()
