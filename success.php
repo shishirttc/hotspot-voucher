@@ -84,6 +84,13 @@ if ($http_code == 200 && isset($result_data['status']) && $result_data['status']
         'mobile' => $mobile,
         'expires_at' => date('Y-m-d', strtotime('+7 days'))
     ]);
+    
+    // CREATE VOUCHER ON MIKROTIK ROUTER
+    $mikrotik_result = createMikrotikVoucher($code, $package_id, $package_details);
+    
+    // Store result
+    $_SESSION['mikrotik_created'] = $mikrotik_result['success'];
+    $_SESSION['mikrotik_message'] = $mikrotik_result['message'];
 
     file_put_contents("old_codes.csv", "$mobile,$package_id,$code,".date('Y-m-d h:i:s A')."\n", FILE_APPEND);
 
@@ -104,6 +111,75 @@ if ($http_code == 200 && isset($result_data['status']) && $result_data['status']
             }
         }
     }
+
+/**
+ * Create voucher on Mikrotik Router
+ */
+function createMikrotikVoucher($code, $package_id, $package_details) {
+    global $mikrotik_config;
+    
+    if (!$mikrotik_config['enabled']) {
+        logMikrotikActivity("Mikrotik disabled, skipping voucher creation");
+        return [
+            'success' => false,
+            'message' => 'Mikrotik integration disabled'
+        ];
+    }
+    
+    try {
+        require_once 'MikrotikAPI.php';
+        
+        // Calculate expiry days based on package
+        $expire_days = 7; // default
+        if (strpos($package_id, '30d') !== false) {
+            $expire_days = 30;
+        } elseif (strpos($package_id, '15d') !== false) {
+            $expire_days = 15;
+        } elseif (strpos($package_id, '7d') !== false) {
+            $expire_days = 7;
+        } elseif (strpos($package_id, '3d') !== false) {
+            $expire_days = 3;
+        } elseif (strpos($package_id, '1d') !== false) {
+            $expire_days = 1;
+        } elseif (strpos($package_id, '5h') !== false) {
+            $expire_days = 0.21; // 5 hours = 0.21 days
+        }
+        
+        // Initialize API
+        $api = new MikrotikAPI(
+            $mikrotik_config['host'],
+            $mikrotik_config['port'],
+            $mikrotik_config['username'],
+            $mikrotik_config['password']
+        );
+        
+        // Create voucher
+        $result = $api->createVoucher(
+            $code,
+            $mikrotik_config['voucher']['profile'],
+            $expire_days
+        );
+        
+        logMikrotikActivity("Voucher creation result", [
+            'code' => $code,
+            'package' => $package_id,
+            'result' => $result
+        ]);
+        
+        return $result;
+        
+    } catch (Exception $e) {
+        logMikrotikActivity("Voucher creation exception", [
+            'error' => $e->getMessage()
+        ]);
+        
+        return [
+            'success' => false,
+            'message' => 'Error creating voucher: ' . $e->getMessage()
+        ];
+    }
+}
+
 ?>
 <!DOCTYPE html>
 <html>
@@ -196,6 +272,18 @@ if ($http_code == 200 && isset($result_data['status']) && $result_data['status']
         <div class="col-lg-8 text-center">
             <div class="success-card">
               <h2 class="congrats-text"><i class="bi bi-check-circle-fill"></i> Payment Successful!</h2>
+              
+              <!-- Mikrotik Status Alert -->
+              <?php if (!empty($_SESSION['mikrotik_created'])): ?>
+              <div class="alert alert-success" role="alert">
+                <i class="bi bi-router"></i> <strong>Voucher created on Mikrotik Router!</strong>
+              </div>
+              <?php elseif (isset($_SESSION['mikrotik_created']) && !$_SESSION['mikrotik_created']): ?>
+              <div class="alert alert-warning" role="alert">
+                <i class="bi bi-exclamation-triangle"></i> <strong>Code generated locally.</strong> Router creation: <?= htmlspecialchars($_SESSION['mikrotik_message'] ?? 'Failed') ?>
+              </div>
+              <?php endif; ?>
+              
               <p class="package-details">You have successfully purchased the <strong><?= htmlspecialchars($package_name) ?></strong> package for <strong>৳<?= htmlspecialchars($price) ?></strong>. Your voucher code is:</p>
               
               <div class="input-group mb-3 mx-auto code-input-group" style="max-width: 400px;">
