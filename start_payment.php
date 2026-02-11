@@ -8,11 +8,6 @@ $price = $_POST['price'];
 
 if (!preg_match('/^01[3-9][0-9]{8}$/', $mobile)) die("Invalid mobile!");
 
-$codeFile = "codes/{$package}.csv";
-if (!file_exists($codeFile) || count(file($codeFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES)) == 0) {
-    die("Sorry, no codes available for this package right now. Please try again later or choose another package.");
-}
-
 $_SESSION['mobile'] = $mobile;
 $_SESSION['package'] = $package;
 $_SESSION['price'] = $price;
