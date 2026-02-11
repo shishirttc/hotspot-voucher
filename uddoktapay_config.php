@@ -18,12 +18,12 @@ $config = [
 ];
 
 $allPackages = [
-    '5h' => ['name' => '5 Hours', 'price' => 5],
-    '1d' => ['name' => '1 Day', 'price' => 10],
-    '3d' => ['name' => '3 Days', 'price' => 20],
-    '7d' => ['name' => '7 Days', 'price' => 40],
-    '15d' => ['name' => '15 Days', 'price' => 60],
-    '30d' => ['name' => '30 Days', 'price' => 100],
+    '5h' => ['name' => '5 Hours', 'price' => 1],
+    '1d' => ['name' => '1 Day', 'price' => 1],
+    '3d' => ['name' => '3 Days', 'price' => 1],
+    '7d' => ['name' => '7 Days', 'price' => 1],
+    '15d' => ['name' => '15 Days', 'price' => 1],
+    '30d' => ['name' => '30 Days', 'price' => 1],
 ];
 
 function getPackageDetails($id) {
